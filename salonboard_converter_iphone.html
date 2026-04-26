@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="予約変換" />
+  <meta name="theme-color" content="#e8756a" />
+  <title>予約日程変換</title>
+  <style>
+    :root {
+      --rose: #e8756a;
+      --rose-dark: #d86459;
+      --rose-pale: #fdf0ee;
+      --cream: #fdfaf8;
+      --charcoal: #2c2420;
+      --warm-gray: #8c7b76;
+      --border: rgba(232,117,106,0.24);
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: var(--cream);
+      color: var(--charcoal);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    }
+
+    body {
+      padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 18px 0 34px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 12px 4px 18px;
+    }
+
+    .brand {
+      font-size: 12px;
+      letter-spacing: .12em;
+      color: var(--warm-gray);
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-size: 23px;
+      line-height: 1.35;
+      margin: 0;
+      font-weight: 800;
+    }
+
+    .lead {
+      margin: 12px auto 0;
+      color: var(--warm-gray);
+      font-size: 13px;
+      line-height: 1.7;
+      max-width: 520px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      margin: 0 0 14px;
+      box-shadow: 0 6px 24px rgba(44,36,32,.05);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin: 0 0 10px;
+    }
+
+    textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      background: var(--cream);
+      color: var(--charcoal);
+      font-size: 16px;
+      line-height: 1.65;
+      padding: 13px;
+      resize: vertical;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    textarea:focus {
+      background: var(--white);
+      border-color: var(--rose);
+    }
+
+    #input { min-height: 230px; }
+    #output { min-height: 210px; white-space: pre; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn-row.single { grid-template-columns: 1fr; }
+
+    button {
+      appearance: none;
+      -webkit-appearance: none;
+      border: none;
+      border-radius: 14px;
+      min-height: 52px;
+      padding: 14px 12px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .primary {
+      background: var(--rose);
+      color: var(--white);
+      box-shadow: 0 5px 18px rgba(232,117,106,.24);
+    }
+
+    .primary:active { background: var(--rose-dark); transform: translateY(1px); }
+
+    .secondary {
+      background: var(--rose-pale);
+      color: var(--rose-dark);
+      border: 1px solid var(--border);
+    }
+
+    .copy {
+      background: var(--charcoal);
+      color: var(--white);
+    }
+
+    .status {
+      min-height: 24px;
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--warm-gray);
+    }
+
+    .tips {
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--warm-gray);
+      margin-top: 10px;
+      background: var(--rose-pale);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .count {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--rose-pale);
+      color: var(--rose-dark);
+      font-size: 12px;
+      font-weight: 800;
+      margin-left: 6px;
+      vertical-align: 1px;
+    }
+
+    @media (max-width: 420px) {
+      body { padding-left: 10px; padding-right: 10px; }
+      .wrap { padding-top: 10px; }
+      h1 { font-size: 21px; }
+      .card { padding: 14px; border-radius: 16px; }
+      textarea { font-size: 16px; }
+      .btn-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="header">
+      <div class="brand">FRECCIA 西新井店</div>
+      <h1>予約日程変換ツール</h1>
+      <p class="lead">サロンボードの予約データを貼り付けるだけで、2026年の正しい曜日に変換します。</p>
+    </section>
+
+    <section class="card">
+      <div class="card-title">貼り付け欄</div>
+      <textarea id="input" placeholder="ここにサロンボードの予約データを貼り付けてください"></textarea>
+      <div class="btn-row">
+        <button class="primary" id="convertBtn" type="button">変換する</button>
+        <button class="secondary" id="clearBtn" type="button">クリア</button>
+      </div>
+      <div class="tips">キャンセル・サロンキャンセルは自動で除外します。時刻がない場合は00:00で処理します。</div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">変換結果 <span class="count" id="count">0件</span></div>
+      <textarea id="output" readonly placeholder="変換結果がここに表示されます"></textarea>
+      <div class="btn-row single">
+        <button class="copy" id="copyBtn" type="button">結果をコピー</button>
+      </div>
+      <div class="status" id="status"></div>
+    </section>
+  </main>
+
+  <script>
+    const YEAR = 2026;
+    const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+    const inputEl = document.getElementById("input");
+    const outputEl = document.getElementById("output");
+    const statusEl = document.getElementById("status");
+    const countEl = document.getElementById("count");
+    const convertBtn = document.getElementById("convertBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const copyBtn = document.getElementById("copyBtn");
+
+    function toHalfWidth(str) {
+      return str.replace(/[０-９：／]/g, function(s) {
+        return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+      });
+    }
+
+    function pad2(num) {
+      return String(num).padStart(2, "0");
+    }
+
+    function isValidDate(year, month, day) {
+      const date = new Date(year, month - 1, day);
+      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    }
+
+    function formatDateTime(month, day, hour, minute) {
+      const date = new Date(YEAR, month - 1, day, hour, minute);
+      const weekday = WEEKDAYS[date.getDay()];
+      return `${pad2(month)}月${pad2(day)}日（${weekday}）${pad2(hour)}:${pad2(minute)}〜`;
+    }
+
+    function extractReservations(rawInput) {
+      const text = toHalfWidth(rawInput)
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n");
+
+      const datePattern = /(\d{1,2})\/(\d{1,2})|(\d{1,2})月(\d{1,2})日/g;
+      const matches = [];
+      let match;
+
+      while ((match = datePattern.exec(text)) !== null) {
+        const month = Number(match[1] || match[3]);
+        const day = Number(match[2] || match[4]);
+        matches.push({ index: match.index, end: datePattern.lastIndex, month, day });
+      }
+
+      const reservations = [];
+
+      for (let i = 0; i < matches.length; i++) {
+        const current = matches[i];
+        const next = matches[i + 1];
+        const block = text.slice(current.index, next ? next.index : text.length);
+
+        if (!isValidDate(YEAR, current.month, current.day)) continue;
+        if (/キャンセル|サロンキャンセル/.test(block)) continue;
+
+        const afterDateText = text.slice(current.end, next ? next.index : text.length);
+        const timeMatch = afterDateText.match(/(\d{1,2}):(\d{2})/);
+
+        let hour = 0;
+        let minute = 0;
+
+        if (timeMatch) {
+          hour = Number(timeMatch[1]);
+          minute = Number(timeMatch[2]);
+        }
+
+        if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+          hour = 0;
+          minute = 0;
+        }
+
+        reservations.push({
+          month: current.month,
+          day: current.day,
+          hour,
+          minute,
+          sortTime: new Date(YEAR, current.month - 1, current.day, hour, minute).getTime()
+        });
+      }
+
+      reservations.sort((a, b) => a.sortTime - b.sortTime);
+      return reservations;
+    }
+
+    function convertReservations() {
+      const rawInput = inputEl.value;
+      if (!rawInput.trim()) {
+        outputEl.value = "";
+        countEl.textContent = "0件";
+        statusEl.textContent = "予約データを貼り付けてください。";
+        return;
+      }
+
+      const reservations = extractReservations(rawInput);
+      const result = reservations.map(r => formatDateTime(r.month, r.day, r.hour, r.minute)).join("\n");
+
+      outputEl.value = result;
+      countEl.textContent = `${reservations.length}件`;
+      statusEl.textContent = result ? "変換しました。下のボタンでコピーできます。" : "変換できる予約がありませんでした。";
+    }
+
+    async function copyResult() {
+      if (!outputEl.value.trim()) {
+        statusEl.textContent = "コピーする内容がありません。";
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(outputEl.value);
+        statusEl.textContent = "コピーしました。";
+      } catch (e) {
+        outputEl.focus();
+        outputEl.select();
+        document.execCommand("copy");
+        statusEl.textContent = "コピーしました。";
+      }
+    }
+
+    function clearAll() {
+      inputEl.value = "";
+      outputEl.value = "";
+      countEl.textContent = "0件";
+      statusEl.textContent = "";
+      inputEl.focus();
+    }
+
+    convertBtn.addEventListener("click", convertReservations);
+    clearBtn.addEventListener("click", clearAll);
+    copyBtn.addEventListener("click", copyResult);
+
+    inputEl.addEventListener("paste", function() {
+      setTimeout(convertReservations, 100);
+    });
+  </script>
+</body>
+</html>
